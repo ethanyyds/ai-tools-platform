@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai-tools-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DIFY_API_BASE_URL=${DIFY_API_BASE_URL:-https://api.dify.ai/v1}
+      - DIFY_API_KEY=${DIFY_API_KEY}
+      - CREATIVITY_APP_ID=${CREATIVITY_APP_ID}
+      - CREATIVITY_API_KEY=${CREATIVITY_API_KEY}
+      - DATABASE_URL=sqlite:///./ai_tools.db
+      - ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+    volumes:
+      - ./backend:/app
+      - backend_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ai-tools-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  backend_data:
