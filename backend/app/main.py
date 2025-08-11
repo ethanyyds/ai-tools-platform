@@ -1,64 +1,47 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from .api.tools import router as tools_router
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+# 最小可运行的 FastAPI Demo
+app = FastAPI(title="AI Tools Demo", version="0.1.0")
 
-# 创建FastAPI应用
-app = FastAPI(
-    title="AI Tools Platform",
-    description="集成Dify AI工具的平台",
-    version="1.0.0"
-)
-
-# 配置CORS
-origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
-
+origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 注册路由
-app.include_router(tools_router)
-
 @app.get("/")
 async def root():
-    """根路径"""
-    return {"message": "AI Tools Platform API", "version": "1.0.0"}
+    return {"message": "Hello from AI Tools Demo"}
 
 @app.get("/health")
 async def health_check():
-    """健康检查"""
     return {"status": "healthy"}
 
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request, exc):
-    """HTTP异常处理"""
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"message": exc.detail, "status_code": exc.status_code}
-    )
-
-@app.exception_handler(Exception)
-async def general_exception_handler(request, exc):
-    """通用异常处理"""
-    return JSONResponse(
-        status_code=500,
-        content={"message": "Internal server error", "status_code": 500}
-    )
+@app.post("/api/creativity/demo")
+async def creativity_demo(payload: dict):
+    """最小Demo：模拟调用Dify产生创意，先不接Dify，返回固定结构。
+    前端后续只需将此接口替换为真实Dify调用即可。
+    """
+    topic = payload.get("topic", "未提供主题")
+    context = payload.get("context", "")
+    return {
+        "success": True,
+        "data": {
+            "workflow_run_id": "demo-run-id",
+            "task_id": "demo-task-id",
+            "data": {
+                "outputs": {
+                    "text": f"基于六顶思考帽对主题 ‘{topic}’ 的简要创意：\n- 白帽：列出现状与事实\n- 红帽：直觉与情绪反应\n- 黑帽：风险与限制\n- 黄帽：价值与收益\n- 绿帽：创意与替代方案\n- 蓝帽：行动步骤与度量指标\n\n背景：{context}"
+                }
+            }
+        }
+    }
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True
-    )
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

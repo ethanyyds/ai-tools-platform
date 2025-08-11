@@ -1,18 +1,70 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="AI工具平台 - 集成Dify AI应用的智能工具平台"
-    />
-    <title>AI Tools Platform</title>
-  </head>
-  <body>
-    <noscript>您需要启用JavaScript才能运行此应用。</noscript>
-    <div id="root"></div>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Tools Demo</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; background: #f5f5f5; }
+    .container { max-width: 720px; margin: 40px auto; padding: 24px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    h1 { margin: 0 0 12px; color: #1677ff; }
+    p { color: #666; }
+    label { display: block; margin: 12px 0 6px; font-weight: 600; }
+    input, textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+    button { margin-top: 16px; width: 100%; padding: 12px; background: #1677ff; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    pre { white-space: pre-wrap; background: #fafafa; padding: 12px; border: 1px solid #eee; border-radius: 6px; }
+    .footer { margin-top: 24px; font-size: 12px; color: #888; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>AI Tools Demo</h1>
+    <p>最小可运行Demo。后端提供 <code>/api/creativity/demo</code> 接口，当前返回模拟数据。后续可替换成真实Dify调用。</p>
+
+    <label>主题</label>
+    <input id="topic" placeholder="例如：提高团队效率" />
+
+    <label>背景（可选）</label>
+    <textarea id="context" rows="4" placeholder="补充背景信息..." ></textarea>
+
+    <button id="submit">生成创意</button>
+
+    <div id="result" style="margin-top: 16px; display: none;">
+      <h3>结果</h3>
+      <pre id="resultPre"></pre>
+    </div>
+
+    <div class="footer">前端纯静态HTML，使用原生fetch调用后端。</div>
+  </div>
+
+  <script>
+    const apiBase = 'http://localhost:8000';
+    const btn = document.getElementById('submit');
+    const topic = document.getElementById('topic');
+    const context = document.getElementById('context');
+    const result = document.getElementById('result');
+    const resultPre = document.getElementById('resultPre');
+
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      result.style.display = 'none';
+      try {
+        const res = await fetch(apiBase + '/api/creativity/demo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic: topic.value, context: context.value })
+        });
+        const data = await res.json();
+        resultPre.textContent = JSON.stringify(data, null, 2);
+        result.style.display = 'block';
+      } catch (e) {
+        resultPre.textContent = '请求失败: ' + (e?.message || e);
+        result.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
 </html>
